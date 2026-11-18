@@ -1,2 +1,5 @@
 *.pwn linguist-language=Pawn
 *.inc linguist-language=Pawn
+*.sh text eol=lf
+Dockerfile text eol=lf
+conan-profile text eol=lf
