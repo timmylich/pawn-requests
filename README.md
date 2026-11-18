@@ -5,6 +5,17 @@
 This package provides an API for interacting with HTTP(S) APIs with support for
 text and JSON data types.
 
+## About this fork
+
+Fork of [Southclaws/pawn-requests](https://github.com/Southclaws/pawn-requests) with a Linux build that works on old and odd servers:
+
+- built on glibc 2.17 (manylinux2014_i686), so no `GLIBC_2.36 not found`;
+- works with omp-server's static-OpenSSL build: the plugin keeps its own OpenSSL symbols private (fixes `Error in SSL handshake`);
+- CA bundle is taken from `plugins/cacert.pem` (if present) or the usual distro paths;
+- RDRAND/RDSEED are hidden from OpenSSL (broken on some AMD CPUs and VMs).
+
+Build with Docker: `sh build.sh` → `out/requests.so`.
+
 ## Installation
 
 Simply install to your project:

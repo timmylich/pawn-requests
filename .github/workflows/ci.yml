@@ -20,13 +20,14 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Set up Earthly
-        uses: earthly/actions/setup-earthly@v1
-        with:
-          version: latest
-
+      # old-glibc build (manylinux2014_i686, glibc 2.17) via Dockerfile
       - name: Build and package
-        run: earthly --ci --artifact +package/pawn-requests-linux.zip releases/pawn-requests-linux.zip
+        run: |
+          sh build.sh
+          mkdir -p releases/linux/plugins releases/linux/includes
+          cp out/requests.so releases/linux/plugins/
+          cp *.inc releases/linux/includes/
+          cd releases/linux && zip -r ../pawn-requests-linux.zip plugins includes
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
