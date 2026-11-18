@@ -51,3 +51,5 @@ build*/
 
 releases
 releases/*
+# local build output
+out/

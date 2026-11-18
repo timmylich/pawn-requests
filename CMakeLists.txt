@@ -23,7 +23,12 @@ endif()
 
 include("${CONAN_CMAKE_FILE}")
 
-conan_cmake_run(REQUIRES cpprestsdk/2.10.18
+if(UNIX)
+	# OpenSSL 3 build scripts need a newer Perl than old build images (glibc 2.17) ship
+	set(REQUESTS_OPENSSL openssl/1.1.1w)
+endif()
+
+conan_cmake_run(REQUIRES cpprestsdk/2.10.18 ${REQUESTS_OPENSSL}
                BASIC_SETUP BUILD missing
                SETTINGS arch=x86)
 
@@ -43,6 +48,9 @@ elseif(UNIX)
 	add_link_options(
 		"-static-libgcc"
 		"-static-libstdc++"
+		# omp-server's static-OpenSSL build exports its own OpenSSL; keep ours private or the SSL handshake fails
+		"-Wl,--exclude-libs,ALL"
+		"-Wl,-Bsymbolic"
 	)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 endif()

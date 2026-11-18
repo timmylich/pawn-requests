@@ -19,6 +19,23 @@ int Impl::websocketClientsTableCounter = 0;
 
 namespace
 {
+#ifndef _WIN32
+    // Distros keep the CA bundle in different places; load every one that exists and never throw.
+    // plugins/cacert.pem (relative to the server dir) lets an outdated system bundle be overridden.
+    void loadCaBundles(boost::asio::ssl::context &ctx)
+    {
+        for (const char *path : {"plugins/cacert.pem",
+                                 "/etc/ssl/certs/ca-certificates.crt",
+                                 "/etc/pki/tls/certs/ca-bundle.crt",
+                                 "/etc/ssl/ca-bundle.pem",
+                                 "/etc/ssl/cert.pem"})
+        {
+            boost::system::error_code ec;
+            ctx.load_verify_file(path, ec);
+        }
+    }
+#endif
+
     bool isSslLoggingEnabled()
     {
         static const bool enabled = []() {
@@ -85,7 +102,7 @@ int Impl::RequestsClient(std::string endpoint, int headers)
         config.set_ssl_context_callback([](boost::asio::ssl::context &ctx)
                                         {
                                             ctx.set_default_verify_paths();
-                                            ctx.load_verify_file("/etc/ssl/certs/ca-certificates.crt");
+                                            loadCaBundles(ctx);
                                         });
 #endif
         http_client *client = new http_client(utility::conversions::to_string_t(endpoint), config);
@@ -324,7 +341,7 @@ int Impl::WebSocketClient(AMX *amx, std::string address, std::string callback)
     wcc.set_ssl_context_callback([](boost::asio::ssl::context &ctx)
                                  {
                                      ctx.set_default_verify_paths();
-                                     ctx.load_verify_file("/etc/ssl/certs/ca-certificates.crt");
+                                     loadCaBundles(ctx);
                                  });
 #endif
     websocket_callback_client *client = new websocket_callback_client(wcc);
@@ -383,7 +400,7 @@ int Impl::JsonWebSocketClient(AMX *amx, std::string address, std::string callbac
     wcc.set_ssl_context_callback([](boost::asio::ssl::context &ctx)
                                  {
                                      ctx.set_default_verify_paths();
-                                     ctx.load_verify_file("/etc/ssl/certs/ca-certificates.crt");
+                                     loadCaBundles(ctx);
                                  });
 #endif
     websocket_callback_client *client = new websocket_callback_client(wcc);

@@ -8,6 +8,12 @@
 
 logprintf_t logprintf;
 
+#if !defined(_WIN32) && (defined(__i386__) || defined(__x86_64__))
+// CPU capability bits of the statically linked OpenSSL
+extern "C" unsigned int OPENSSL_ia32cap_P[];
+#define REQUESTS_MASK_RDRAND
+#endif
+
 extern "C" AMX_NATIVE_INFO amx_Natives[] = {
     {"RequestsClient", Natives::RequestsClient},
     {"RequestHeaders", Natives::RequestHeaders},
@@ -64,6 +70,12 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData)
 {
     pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
     logprintf = (logprintf_t)ppData[PLUGIN_DATA_LOGPRINTF];
+
+#ifdef REQUESTS_MASK_RDRAND
+    // Broken RDRAND/RDSEED on some AMD CPUs and VMs breaks OpenSSL; hide them so it seeds from the kernel.
+    OPENSSL_ia32cap_P[1] &= ~(1u << 30); // CPUID.1:ECX.RDRAND
+    OPENSSL_ia32cap_P[2] &= ~(1u << 18); // CPUID.7:EBX.RDSEED
+#endif
 
     return true;
 }
